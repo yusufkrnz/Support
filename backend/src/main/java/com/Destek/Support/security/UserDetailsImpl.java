@@ -1,6 +1,7 @@
 package com.Destek.Support.security;
 
 import com.Destek.Support.model.User;
+import com.Destek.Support.model.UserRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,11 +20,11 @@ public class UserDetailsImpl implements UserDetails {
     @JsonIgnore
     private String password;
     private String fullName;
-    private User.UserRole role;
+    private UserRole role;
     private Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(Long id, String email, String password, String fullName, 
-                          User.UserRole role, Collection<? extends GrantedAuthority> authorities) {
+                          UserRole role, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -53,7 +54,7 @@ public class UserDetailsImpl implements UserDetails {
         return fullName;
     }
     
-    public User.UserRole getRole() {
+    public UserRole getRole() {
         return role;
     }
 

@@ -3,144 +3,79 @@ package com.Destek.Support.controller;
 import com.Destek.Support.model.Feedback;
 import com.Destek.Support.model.SupportRequest;
 import com.Destek.Support.model.User;
-import com.Destek.Support.repository.FeedbackRepository;
-import com.Destek.Support.repository.SupportRequestRepository;
-import com.Destek.Support.repository.UserRepository;
+import com.Destek.Support.service.FeedbackService;
+import com.Destek.Support.service.SupportRequestService;
+import com.Destek.Support.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
-    private SupportRequestRepository supportRequestRepository;
+    private SupportRequestService supportRequestService;
 
     @Autowired
-    private FeedbackRepository feedbackRepository;
+    private FeedbackService feedbackService;
 
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(userService.findAll());
     }
 
-    @GetMapping("/users/representatives")
-    public ResponseEntity<?> getAllRepresentatives() {
-        List<User> representatives = userRepository.findByRole(User.UserRole.REPRESENTATIVE);
-        return ResponseEntity.ok(representatives);
+    @GetMapping("/requests")
+    public ResponseEntity<List<SupportRequest>> getAllRequests() {
+        return ResponseEntity.ok(supportRequestService.findAll());
     }
 
-    @GetMapping("/analytics/requests")
-    public ResponseEntity<?> getRequestAnalytics() {
-        List<SupportRequest> allRequests = supportRequestRepository.findAll();
-        
-        long totalRequests = allRequests.size();
-        long openRequests = allRequests.stream()
-                .filter(r -> r.getStatus() == SupportRequest.RequestStatus.OPEN)
-                .count();
-        long assignedRequests = allRequests.stream()
-                .filter(r -> r.getStatus() == SupportRequest.RequestStatus.ASSIGNED)
-                .count();
-        long closedRequests = allRequests.stream()
-                .filter(r -> r.getStatus() == SupportRequest.RequestStatus.CLOSED)
-                .count();
-        
-        Map<String, Object> analytics = new HashMap<>();
-        analytics.put("totalRequests", totalRequests);
-        analytics.put("openRequests", openRequests);
-        analytics.put("assignedRequests", assignedRequests);
-        analytics.put("closedRequests", closedRequests);
-        
-        return ResponseEntity.ok(analytics);
+    @GetMapping("/feedbacks")
+    public ResponseEntity<List<Feedback>> getAllFeedbacks() {
+        return ResponseEntity.ok(feedbackService.findAll());
     }
 
-    @GetMapping("/analytics/feedback")
-    public ResponseEntity<?> getFeedbackAnalytics() {
-        List<Feedback> allFeedback = feedbackRepository.findAll();
-        
-        long totalFeedback = allFeedback.size();
-        
-        Map<Feedback.Rating, Long> ratingCounts = allFeedback.stream()
-                .collect(Collectors.groupingBy(Feedback::getRating, Collectors.counting()));
-        
-        Map<String, Object> analytics = new HashMap<>();
-        analytics.put("totalFeedback", totalFeedback);
-        analytics.put("ratingCounts", ratingCounts);
-        
-        // Calculate average rating (assuming enum ordinal reflects rating value)
-        double averageRating = allFeedback.stream()
-                .mapToInt(f -> f.getRating().ordinal())
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics() {
+        List<SupportRequest> requests = supportRequestService.findAll();
+        List<Feedback> feedbacks = feedbackService.findAll();
+        List<User> users = userService.findAll();
+
+        Map<String, Object> statistics = Map.of(
+            "totalRequests", requests.size(),
+            "totalFeedbacks", feedbacks.size(),
+            "totalUsers", users.size(),
+            "averageRating", feedbacks.stream()
+                .mapToInt(Feedback::getRating)
                 .average()
-                .orElse(0.0);
-        analytics.put("averageRating", averageRating);
-        
-        // Sentiment analysis summary
-        Map<String, Long> sentimentCounts = allFeedback.stream()
-                .filter(f -> f.getSentimentAnalysis() != null)
-                .collect(Collectors.groupingBy(Feedback::getSentimentAnalysis, Collectors.counting()));
-        analytics.put("sentimentCounts", sentimentCounts);
-        
-        return ResponseEntity.ok(analytics);
+                .orElse(0.0)
+        );
+
+        return ResponseEntity.ok(statistics);
     }
 
-    @GetMapping("/analytics/representatives")
-    public ResponseEntity<?> getRepresentativeAnalytics() {
-        List<User> representatives = userRepository.findByRole(User.UserRole.REPRESENTATIVE);
-        List<SupportRequest> allRequests = supportRequestRepository.findAll();
-        
-        Map<Long, Object> repAnalytics = new HashMap<>();
-        
-        for (User rep : representatives) {
-            Map<String, Object> analytics = new HashMap<>();
-            
-            long assignedRequests = allRequests.stream()
-                    .filter(r -> r.getRepresentative() != null && r.getRepresentative().getId().equals(rep.getId()))
-                    .count();
-            
-            long closedRequests = allRequests.stream()
-                    .filter(r -> r.getRepresentative() != null && 
-                           r.getRepresentative().getId().equals(rep.getId()) && 
-                           r.getStatus() == SupportRequest.RequestStatus.CLOSED)
-                    .count();
-            
-            analytics.put("name", rep.getFullName());
-            analytics.put("email", rep.getEmail());
-            analytics.put("assignedRequests", assignedRequests);
-            analytics.put("closedRequests", closedRequests);
-            
-            // Get feedback for this representative's requests
-            List<Feedback> repFeedback = allRequests.stream()
-                    .filter(r -> r.getRepresentative() != null && r.getRepresentative().getId().equals(rep.getId()))
-                    .flatMap(r -> feedbackRepository.findBySupportRequest(r).stream())
-                    .collect(Collectors.toList());
-            
-            if (!repFeedback.isEmpty()) {
-                double avgRating = repFeedback.stream()
-                        .mapToInt(f -> f.getRating().ordinal())
-                        .average()
-                        .orElse(0.0);
-                analytics.put("averageRating", avgRating);
-                
-                Map<Feedback.Rating, Long> ratingCounts = repFeedback.stream()
-                        .collect(Collectors.groupingBy(Feedback::getRating, Collectors.counting()));
-                analytics.put("ratingCounts", ratingCounts);
-            }
-            
-            repAnalytics.put(rep.getId(), analytics);
-        }
-        
-        return ResponseEntity.ok(repAnalytics);
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/requests/{id}")
+    public ResponseEntity<Void> deleteRequest(@PathVariable Long id) {
+        supportRequestService.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/feedbacks/{id}")
+    public ResponseEntity<Void> deleteFeedback(@PathVariable Long id) {
+        feedbackService.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 } 

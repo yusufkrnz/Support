@@ -30,6 +30,7 @@ import { supportService } from '../../services/api';
 import { authService } from '../../services/auth';
 import { customerService } from '../../services/customer';
 import { aiService } from '../../services/ai';
+import ChatbotPage from './ChatbotPage';
 
 // Destek talebi detay sayfası
 const SupportRequestDetail = ({ requestId, onClose }) => {
@@ -390,7 +391,7 @@ const SupportRequestList = ({ onSelectRequest }) => {
         <Button 
           variant="contained" 
           startIcon={<ChatIcon />}
-          onClick={() => onSelectRequest('/customer/chat')}
+          onClick={() => onSelectRequest('/customer/requests/chat')}
         >
           Yeni Destek Talebi
         </Button>
@@ -421,267 +422,24 @@ const Profile = () => {
   );
 };
 
-// Chatbot sayfası
-const ChatbotPage = () => {
-  const [messages, setMessages] = useState([
-    { id: 1, text: 'Merhaba! Size nasıl yardımcı olabilirim?', sender: 'bot', timestamp: new Date() }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showNewTicketForm, setShowNewTicketForm] = useState(false);
-  const [ticketSubject, setTicketSubject] = useState('');
-  const [ticketDescription, setTicketDescription] = useState('');
-  const [submittingTicket, setSubmittingTicket] = useState(false);
-  const [error, setError] = useState(null);
-  const messagesEndRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Mesajları en alta kaydır
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Mesaj gönderme işlemi
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    
-    const userMessage = { id: messages.length + 1, text: input, sender: 'user', timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-    
-    try {
-      // Backend API'ye bağlanmayı dene
-      try {
-        const response = await aiService.getChatbotResponse(input);
-        const botResponse = { 
-          id: messages.length + 2, 
-          text: response.data.message, 
-          sender: 'bot', 
-          timestamp: new Date(),
-          createTicket: response.data.createTicket || false
-        };
-        setMessages(prev => [...prev, botResponse]);
-        
-        // Eğer bot yeni talep oluşturmayı öneriyorsa formu göster
-        if (response.data.createTicket) {
-          setShowNewTicketForm(true);
-          setTicketSubject(response.data.suggestedSubject || '');
-          setTicketDescription(input);
-        }
-      } catch (apiError) {
-        console.error('API error, using mock data for chatbot:', apiError);
-        // API çağrısı başarısız olursa mock yanıt oluştur
-        
-        // Basit bir yapay zeka yanıtı simülasyonu
-        let botResponse;
-        const lowerInput = input.toLowerCase();
-        
-        if (lowerInput.includes('iade') || lowerInput.includes('geri')) {
-          botResponse = { 
-            id: messages.length + 2, 
-            text: 'İade işlemleri için ürünü satın aldığınız tarihten itibaren 14 gün içinde faturası ve kutusuyla birlikte mağazamıza getirebilirsiniz. Size daha detaylı yardımcı olabilmem için bir destek talebi oluşturmak ister misiniz?', 
-            sender: 'bot', 
-            timestamp: new Date(),
-            createTicket: true
-          };
-          setShowNewTicketForm(true);
-          setTicketSubject('Ürün İadesi Hakkında');
-          setTicketDescription(input);
-        } else if (lowerInput.includes('kargo') || lowerInput.includes('teslimat') || lowerInput.includes('sipariş')) {
-          botResponse = { 
-            id: messages.length + 2, 
-            text: 'Siparişinizin durumunu kontrol etmek için sipariş numaranızı paylaşabilir misiniz? Alternatif olarak, size daha detaylı yardımcı olabilmesi için bir müşteri temsilcisine bağlanmak ister misiniz?', 
-            sender: 'bot', 
-            timestamp: new Date(),
-            createTicket: true
-          };
-          setShowNewTicketForm(true);
-          setTicketSubject('Sipariş Durumu Hakkında');
-          setTicketDescription(input);
-        } else if (lowerInput.includes('ödeme') || lowerInput.includes('fatura')) {
-          botResponse = { 
-            id: messages.length + 2, 
-            text: 'Ödeme veya fatura ile ilgili sorunlar için müşteri temsilcilerimiz size yardımcı olacaktır. Bir destek talebi oluşturmak ister misiniz?', 
-            sender: 'bot', 
-            timestamp: new Date(),
-            createTicket: true
-          };
-          setShowNewTicketForm(true);
-          setTicketSubject('Ödeme/Fatura Sorunu');
-          setTicketDescription(input);
-        } else {
-          botResponse = { 
-            id: messages.length + 2, 
-            text: 'Bu konuda size daha detaylı bilgi vermek için bir müşteri temsilcimizin yardımcı olması gerekiyor. Bir destek talebi oluşturmak ister misiniz?', 
-            sender: 'bot', 
-            timestamp: new Date(),
-            createTicket: true
-          };
-          setShowNewTicketForm(true);
-          setTicketSubject('Genel Destek Talebi');
-          setTicketDescription(input);
-        }
-        
-        setMessages(prev => [...prev, botResponse]);
-      }
-    } catch (error) {
-      console.error('Error getting chatbot response:', error);
-      setError('Chatbot yanıtı alınırken bir hata oluştu.');
-      setMessages(prev => [...prev, { 
-        id: messages.length + 2, 
-        text: 'Üzgünüm, şu anda yanıt veremiyorum. Lütfen daha sonra tekrar deneyin veya bir destek talebi oluşturun.', 
-        sender: 'bot', 
-        timestamp: new Date() 
-      }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Yeni destek talebi oluşturma
-  const handleCreateTicket = async (e) => {
-    e.preventDefault();
-    if (!ticketSubject.trim()) {
-      setError('Lütfen bir konu belirtin.');
-      return;
-    }
-    
-    setSubmittingTicket(true);
-    try {
-      // Backend API'ye bağlanmayı dene
-      try {
-        const user = authService.getCurrentUser();
-        const response = await customerService.createRequest({
-          subject: ticketSubject,
-          description: ticketDescription,
-          customerId: user.id
-        });
-        
-        // Başarılı oluşturma sonrası kullanıcıyı talep detayına yönlendir
-        navigate(`/customer/requests/${response.data.id}`);
-      } catch (apiError) {
-        console.error('API error, using mock data for ticket creation:', apiError);
-        // API çağrısı başarısız olursa başarılı olmuş gibi davran
-        setMessages(prev => [...prev, { 
-          id: messages.length + 1, 
-          text: 'Destek talebiniz başarıyla oluşturuldu! Kısa süre içinde bir temsilcimiz sizinle iletişime geçecektir.', 
-          sender: 'bot', 
-          timestamp: new Date() 
-        }]);
-        setShowNewTicketForm(false);
-        setTicketSubject('');
-        setTicketDescription('');
-      }
-    } catch (error) {
-      console.error('Error creating ticket:', error);
-      setError('Destek talebi oluşturulurken bir hata oluştu.');
-    } finally {
-      setSubmittingTicket(false);
-    }
-  };
-
-  // Yeni talep formunu iptal et
-  const handleCancelTicket = () => {
-    setShowNewTicketForm(false);
-    setTicketSubject('');
-    setTicketDescription('');
-  };
-
-  return (
-    <Paper elevation={3} sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Chatbot
-      </Typography>
-      
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="body1">
-          {messages.map((message) => (
-            <Typography key={message.id} variant="body2" color={message.sender === 'user' ? 'primary' : 'text.primary'}>
-              {message.text}
-            </Typography>
-          ))}
-        </Typography>
-      </Box>
-      
-      <Box sx={{ display: 'flex', mt: 2 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Mesajınızı yazın..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={loading}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          endIcon={<SendIcon />}
-          onClick={(e) => handleSendMessage(e)}
-          disabled={loading || !input.trim()}
-          sx={{ ml: 1 }}
-        >
-          Gönder
-        </Button>
-      </Box>
-      
-      {showNewTicketForm && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Yeni Destek Talebi
-          </Typography>
-          
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Konu"
-            value={ticketSubject}
-            onChange={(e) => setTicketSubject(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Açıklama"
-            value={ticketDescription}
-            onChange={(e) => setTicketDescription(e.target.value)}
-            multiline
-            rows={4}
-          />
-          
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleCreateTicket}
-              disabled={submittingTicket}
-            >
-              Destek Talebi Oluştur
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleCancelTicket}
-              sx={{ ml: 2 }}
-            >
-              İptal
-            </Button>
-          </Box>
-        </Box>
-      )}
-    </Paper>
-  );
-};
-
 // Ana müşteri paneli
 const CustomerDashboard = () => {
-  const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const userInfo = getUserInfo();
+  const [userInfo, setUserInfo] = useState(null);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await getUserInfo();
+        setUserInfo(response);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -689,17 +447,13 @@ const CustomerDashboard = () => {
   };
 
   const handleSelectRequest = (requestId) => {
-    if (requestId === '/customer/chat') {
-      navigate(requestId);
-    } else {
-      setSelectedRequestId(requestId);
-      navigate(`/customer/requests/${requestId}`);
-    }
+    setSelectedRequestId(requestId);
+    navigate(`/customer/requests/${requestId}`);
   };
 
   const menuItems = [
     { text: 'Destek Taleplerim', icon: <HistoryIcon />, path: '/customer/requests' },
-    { text: 'Yeni Destek Talebi', icon: <ChatIcon />, path: '/customer/chat' },
+    { text: 'Chatbot ile Görüş', icon: <ChatIcon />, path: '/customer/chat' },
     { text: 'Profil', icon: <AccountCircleIcon />, path: '/customer/profile' }
   ];
 
@@ -778,6 +532,7 @@ const CustomerDashboard = () => {
             <Route path="/requests" element={<SupportRequestList onSelectRequest={handleSelectRequest} />} />
             <Route path="/requests/:id" element={<SupportRequestDetail requestId={selectedRequestId} onClose={() => navigate('/customer/requests')} />} />
             <Route path="/chat" element={<ChatbotPage />} />
+            <Route path="/requests/chat" element={<ChatbotPage />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>
         </Container>

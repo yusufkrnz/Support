@@ -3,143 +3,115 @@ package com.Destek.Support.controller;
 import com.Destek.Support.model.Message;
 import com.Destek.Support.model.SupportRequest;
 import com.Destek.Support.model.User;
-import com.Destek.Support.repository.MessageRepository;
-import com.Destek.Support.repository.SupportRequestRepository;
-import com.Destek.Support.repository.UserRepository;
+import com.Destek.Support.model.RequestStatus;
+import com.Destek.Support.service.MessageService;
+import com.Destek.Support.service.SupportRequestService;
+import com.Destek.Support.service.UserService;
+import com.Destek.Support.service.ChatbotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/chatbot")
+@CrossOrigin(origins = "*")
 public class ChatbotController {
 
     @Autowired
-    private SupportRequestRepository supportRequestRepository;
+    private SupportRequestService supportRequestService;
 
     @Autowired
-    private MessageRepository messageRepository;
+    private MessageService messageService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
-    private RestTemplate restTemplate;
+    private ChatbotService chatbotService;
+
+    @PostMapping("/start")
+    public ResponseEntity<SupportRequest> startChat(@RequestParam Long customerId) {
+        User customer = userService.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        SupportRequest request = new SupportRequest();
+        request.setTitle("Yeni Destek Talebi");
+        request.setDescription("Chatbot üzerinden başlatılan destek talebi");
+        request.setCustomer(customer);
+        request.setStatus(RequestStatus.OPEN);
+
+        request = supportRequestService.save(request);
+
+        // Bot'un karşılama mesajı
+        Message botMessage = new Message();
+        botMessage.setContent("Merhaba! Size nasıl yardımcı olabilirim?");
+        botMessage.setRequest(request);
+        botMessage.setSender(customer); // Bot mesajları için gönderen olarak müşteriyi kullanıyoruz
+        messageService.save(botMessage);
+
+        return ResponseEntity.ok(request);
+    }
 
     @PostMapping("/message")
-    public ResponseEntity<?> sendMessage(@RequestBody ChatMessageRequest request) {
-        // Get current user
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserEmail = authentication.getName();
-        User currentUser = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Find or create support request
-        SupportRequest supportRequest;
-        if (request.getSupportRequestId() != null) {
-            supportRequest = supportRequestRepository.findById(request.getSupportRequestId())
-                    .orElseThrow(() -> new RuntimeException("Support request not found"));
-        } else {
-            supportRequest = new SupportRequest();
-            supportRequest.setCustomer(currentUser);
-            supportRequest.setSubject(request.getSubject() != null ? request.getSubject() : "New Support Request");
-            supportRequest.setDescription(request.getMessage());
-            supportRequest.setStatus(SupportRequest.RequestStatus.OPEN);
-            supportRequest = supportRequestRepository.save(supportRequest);
-        }
-
-        // Save user message
-        Message userMessage = new Message();
-        userMessage.setSupportRequest(supportRequest);
-        userMessage.setSender(currentUser);
-        userMessage.setContent(request.getMessage());
-        userMessage.setType(Message.MessageType.USER);
-        messageRepository.save(userMessage);
-
-        // Process with AI service
-        Map<String, String> aiRequest = new HashMap<>();
-        aiRequest.put("text", request.getMessage());
+    public ResponseEntity<Message> sendMessage(
+            @RequestParam Long requestId,
+            @RequestParam Long customerId,
+            @RequestParam String content) {
         
-        // This would be replaced with actual AI service call
-        // ChatbotResponse aiResponse = restTemplate.postForObject("http://localhost:8000/analyze", aiRequest, ChatbotResponse.class);
-        
-        // For now, just return a mock response
-        String botResponse = "Thank you for your message. How can I help you today?";
-        
-        // Save bot response
-        Message botMessage = new Message();
-        botMessage.setSupportRequest(supportRequest);
-        botMessage.setContent(botResponse);
-        botMessage.setType(Message.MessageType.CHATBOT);
-        messageRepository.save(botMessage);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("supportRequestId", supportRequest.getId());
-        response.put("message", botResponse);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/request-representative")
-    public ResponseEntity<?> requestRepresentative(@RequestBody RepresentativeRequest request) {
-        SupportRequest supportRequest = supportRequestRepository.findById(request.getSupportRequestId())
+        SupportRequest request = supportRequestService.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Support request not found"));
+        
+        User customer = userService.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        supportRequest.setStatus(SupportRequest.RequestStatus.ASSIGNED);
-        // In a real application, you would assign a representative based on availability
-        // For now, we'll just update the status
-        supportRequestRepository.save(supportRequest);
+        // Müşteri mesajını kaydet
+        Message userMessage = new Message();
+        userMessage.setContent(content);
+        userMessage.setRequest(request);
+        userMessage.setSender(customer);
+        messageService.save(userMessage);
 
-        return ResponseEntity.ok("Your request has been received. A representative will be with you shortly.");
+        // Bot yanıtını oluştur
+        String botResponse = generateBotResponse(content);
+        
+        Message botMessage = new Message();
+        botMessage.setContent(botResponse);
+        botMessage.setRequest(request);
+        botMessage.setSender(customer); // Bot mesajları için gönderen olarak müşteriyi kullanıyoruz
+        messageService.save(botMessage);
+
+        return ResponseEntity.ok(botMessage);
     }
 
-    // Request/Response classes
-    public static class ChatMessageRequest {
-        private Long supportRequestId;
-        private String subject;
-        private String message;
-
-        public Long getSupportRequestId() {
-            return supportRequestId;
-        }
-
-        public void setSupportRequestId(Long supportRequestId) {
-            this.supportRequestId = supportRequestId;
-        }
-
-        public String getSubject() {
-            return subject;
-        }
-
-        public void setSubject(String subject) {
-            this.subject = subject;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
+    @GetMapping("/messages/{requestId}")
+    public ResponseEntity<List<Message>> getMessages(@PathVariable Long requestId) {
+        return ResponseEntity.ok(messageService.findByRequestId(requestId));
     }
 
-    public static class RepresentativeRequest {
-        private Long supportRequestId;
+    @GetMapping("/welcome")
+    public ResponseEntity<String> getWelcomeMessage() {
+        return ResponseEntity.ok(chatbotService.getWelcomeMessage());
+    }
 
-        public Long getSupportRequestId() {
-            return supportRequestId;
-        }
+    @GetMapping("/option/{optionCode}")
+    public ResponseEntity<String> handleOption(@PathVariable int optionCode) {
+        return ResponseEntity.ok(chatbotService.handleOption(optionCode));
+    }
 
-        public void setSupportRequestId(Long supportRequestId) {
-            this.supportRequestId = supportRequestId;
+    private String generateBotResponse(String userMessage) {
+        // Basit bir bot yanıt mantığı
+        userMessage = userMessage.toLowerCase();
+        if (userMessage.contains("merhaba") || userMessage.contains("selam")) {
+            return "Merhaba! Size nasıl yardımcı olabilirim?";
+        } else if (userMessage.contains("yardım")) {
+            return "Size yardımcı olmak için lütfen sorununuzu detaylı bir şekilde açıklayabilir misiniz?";
+        } else if (userMessage.contains("teşekkür")) {
+            return "Rica ederim! Başka bir konuda yardıma ihtiyacınız var mı?";
+        } else {
+            return "Üzgünüm, tam olarak anlayamadım. Lütfen sorunuzu farklı bir şekilde ifade edebilir misiniz?";
         }
     }
 } 

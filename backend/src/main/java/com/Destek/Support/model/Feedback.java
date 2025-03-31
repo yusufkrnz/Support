@@ -1,54 +1,35 @@
 package com.Destek.Support.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "feedbacks")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Feedback {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @ManyToOne
-    @JoinColumn(name = "support_request_id", nullable = false)
-    private SupportRequest supportRequest;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    @Enumerated(EnumType.STRING)
+
     @Column(nullable = false)
-    private Rating rating;
-    
+    private Integer rating;
+
     @Column(columnDefinition = "TEXT")
     private String comment;
-    
-    @Column
-    private String sentimentAnalysis;
-    
-    @Column(nullable = false)
+
+    @ManyToOne
+    @JoinColumn(name = "request_id", nullable = false)
+    private SupportRequest request;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    private User customer;
+
     private LocalDateTime createdAt;
-    
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-    }
-    
-    public enum Rating {
-        NORMAL,
-        FENA_DEGIL,
-        IYI,
-        COK_IYI,
-        HARIKA
     }
 } 

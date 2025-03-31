@@ -61,12 +61,29 @@ export const authService = {
 
 // Chatbot servisleri
 export const chatbotService = {
-  sendMessage: (message, supportRequestId = null) => {
-    return api.post('/chatbot/message', { 
-      message, 
-      supportRequestId,
-      subject: supportRequestId ? undefined : 'New Support Request'
-    });
+  sendMessage: async (message, supportRequestId = null) => {
+    try {
+      const response = await api.post('/chatbot/message', { 
+        message, 
+        supportRequestId,
+        subject: supportRequestId ? undefined : 'New Support Request'
+      });
+      return response;
+    } catch (error) {
+      // API hatası durumunda mock yanıt döndür
+      console.error('API error, using mock response:', error);
+      
+      const mockResponse = {
+        data: {
+          message: generateMockResponse(message),
+          createTicket: message.toLowerCase().includes('iade') || 
+                       message.toLowerCase().includes('kargo') || 
+                       message.toLowerCase().includes('sorun'),
+          suggestedSubject: getSuggestedSubject(message)
+        }
+      };
+      return mockResponse;
+    }
   },
   requestRepresentative: (supportRequestId) => {
     return api.post('/chatbot/request-representative', { supportRequestId });
@@ -75,6 +92,56 @@ export const chatbotService = {
   getChatbotResponse: (text, context = []) => {
     return aiApi.post('/chat', { text, context });
   }
+};
+
+// Mock yanıt oluşturma yardımcı fonksiyonu
+const generateMockResponse = (message) => {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('iade')) {
+    return `📦 İade işlemleri için yardımcı olabilirim!
+
+1️⃣ Ürünü satın aldığınız tarihten itibaren 14 gün içinde iade edebilirsiniz
+2️⃣ Ürün kutusu ve faturası ile birlikte mağazamıza getirebilirsiniz
+3️⃣ İade işleminiz onaylandıktan sonra ödemeniz 3 iş günü içinde iade edilir
+
+✨ Size daha detaylı yardımcı olabilmem için bir destek talebi oluşturmak ister misiniz?`;
+  }
+  
+  if (lowerMessage.includes('kargo') || lowerMessage.includes('teslimat')) {
+    return `🚚 Kargo takibi için yardımcı olabilirim!
+
+📝 Sipariş numaranızı paylaşabilir misiniz?
+🕒 Alternatif olarak, size özel takip için bir müşteri temsilcimize bağlanabiliriz
+
+✨ Detaylı bilgi için bir destek talebi oluşturalım mı?`;
+  }
+  
+  return `🤝 Size nasıl yardımcı olabilirim?
+
+💡 Aşağıdaki konularda destek verebilirim:
+• 📦 İade işlemleri
+• 🚚 Kargo takibi
+• 💳 Ödeme işlemleri
+• ❓ Diğer sorularınız
+
+✨ Detaylı bilgi için bir müşteri temsilcimize bağlanmak ister misiniz?`;
+};
+
+// Konu önerisi oluşturma yardımcı fonksiyonu
+const getSuggestedSubject = (message) => {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('iade')) {
+    return 'Ürün İade Talebi';
+  }
+  if (lowerMessage.includes('kargo') || lowerMessage.includes('teslimat')) {
+    return 'Kargo Takip Talebi';
+  }
+  if (lowerMessage.includes('ödeme') || lowerMessage.includes('para')) {
+    return 'Ödeme İşlemi Talebi';
+  }
+  return 'Genel Destek Talebi';
 };
 
 // Destek talebi servisleri

@@ -3,183 +3,108 @@ package com.Destek.Support.controller;
 import com.Destek.Support.model.Message;
 import com.Destek.Support.model.SupportRequest;
 import com.Destek.Support.model.User;
-import com.Destek.Support.repository.MessageRepository;
-import com.Destek.Support.repository.SupportRequestRepository;
-import com.Destek.Support.repository.UserRepository;
-import com.Destek.Support.security.UserDetailsImpl;
+import com.Destek.Support.model.RequestStatus;
+import com.Destek.Support.service.MessageService;
+import com.Destek.Support.service.SupportRequestService;
+import com.Destek.Support.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/support")
+@RequestMapping("/api/requests")
 public class SupportRequestController {
 
     @Autowired
-    private SupportRequestRepository supportRequestRepository;
+    private SupportRequestService supportRequestService;
 
     @Autowired
-    private MessageRepository messageRepository;
+    private UserService userService;
 
     @Autowired
-    private UserRepository userRepository;
+    private MessageService messageService;
 
-    @GetMapping("/requests")
-    public ResponseEntity<?> getSupportRequests() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<SupportRequest> requests;
+    @PostMapping
+    public ResponseEntity<SupportRequest> createRequest(
+            @RequestParam Long customerId,
+            @RequestParam String title,
+            @RequestParam String description) {
         
-        // Different views based on user role
-        if (currentUser.getRole() == User.UserRole.ADMIN) {
-            requests = supportRequestRepository.findAll();
-        } else if (currentUser.getRole() == User.UserRole.REPRESENTATIVE) {
-            requests = supportRequestRepository.findByRepresentative(currentUser);
-        } else {
-            requests = supportRequestRepository.findByCustomer(currentUser);
-        }
+        User customer = userService.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        return ResponseEntity.ok(requests);
+        SupportRequest request = new SupportRequest();
+        request.setTitle(title);
+        request.setDescription(description);
+        request.setCustomer(customer);
+        request.setStatus(RequestStatus.OPEN);
+
+        return ResponseEntity.ok(supportRequestService.save(request));
     }
 
-    @GetMapping("/requests/{id}")
-    public ResponseEntity<?> getSupportRequestById(@PathVariable Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        SupportRequest request = supportRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Support request not found"));
-
-        // Check if user has access to this request
-        if (currentUser.getRole() != User.UserRole.ADMIN &&
-            !request.getCustomer().getId().equals(currentUser.getId()) &&
-            (request.getRepresentative() == null || !request.getRepresentative().getId().equals(currentUser.getId()))) {
-            return ResponseEntity.status(403).body("Access denied");
-        }
-
-        return ResponseEntity.ok(request);
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<SupportRequest>> getCustomerRequests(@PathVariable Long customerId) {
+        return ResponseEntity.ok(supportRequestService.findByCustomerId(customerId));
     }
 
-    @GetMapping("/requests/{id}/messages")
-    public ResponseEntity<?> getSupportRequestMessages(@PathVariable Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        SupportRequest request = supportRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Support request not found"));
-
-        // Check if user has access to this request
-        if (currentUser.getRole() != User.UserRole.ADMIN &&
-            !request.getCustomer().getId().equals(currentUser.getId()) &&
-            (request.getRepresentative() == null || !request.getRepresentative().getId().equals(currentUser.getId()))) {
-            return ResponseEntity.status(403).body("Access denied");
-        }
-
-        List<Message> messages = messageRepository.findBySupportRequestOrderByTimestampAsc(request);
-        return ResponseEntity.ok(messages);
+    @GetMapping("/assigned/{assignedToId}")
+    public ResponseEntity<List<SupportRequest>> getAssignedRequests(@PathVariable Long assignedToId) {
+        return ResponseEntity.ok(supportRequestService.findByAssignedToId(assignedToId));
     }
 
-    @PostMapping("/requests/{id}/messages")
-    public ResponseEntity<?> addMessage(@PathVariable Long id, @RequestBody MessageRequest messageRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        SupportRequest request = supportRequestRepository.findById(id)
+    @PostMapping("/{requestId}/message")
+    public ResponseEntity<Message> addMessage(
+            @PathVariable Long requestId,
+            @RequestParam Long senderId,
+            @RequestParam String content) {
+        
+        SupportRequest request = supportRequestService.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Support request not found"));
-
-        // Check if user has access to this request
-        if (!request.getCustomer().getId().equals(currentUser.getId()) &&
-            (request.getRepresentative() == null || !request.getRepresentative().getId().equals(currentUser.getId()))) {
-            return ResponseEntity.status(403).body("Access denied");
-        }
+        
+        User sender = userService.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Message message = new Message();
-        message.setSupportRequest(request);
-        message.setSender(currentUser);
-        message.setContent(messageRequest.getContent());
-        
-        if (currentUser.getRole() == User.UserRole.REPRESENTATIVE) {
-            message.setType(Message.MessageType.REPRESENTATIVE);
-        } else {
-            message.setType(Message.MessageType.USER);
-        }
-        
-        messageRepository.save(message);
-        
-        return ResponseEntity.ok(message);
+        message.setContent(content);
+        message.setRequest(request);
+        message.setSender(sender);
+
+        return ResponseEntity.ok(messageService.save(message));
     }
 
-    @PreAuthorize("hasRole('REPRESENTATIVE') or hasRole('ADMIN')")
-    @PostMapping("/requests/{id}/assign")
-    public ResponseEntity<?> assignRequest(@PathVariable Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (currentUser.getRole() != User.UserRole.REPRESENTATIVE && currentUser.getRole() != User.UserRole.ADMIN) {
-            return ResponseEntity.status(403).body("Access denied");
-        }
-
-        SupportRequest request = supportRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Support request not found"));
-
-        request.setRepresentative(currentUser);
-        request.setStatus(SupportRequest.RequestStatus.ASSIGNED);
-        supportRequestRepository.save(request);
-
-        return ResponseEntity.ok("Support request assigned successfully");
+    @GetMapping("/{requestId}/messages")
+    public ResponseEntity<List<Message>> getMessages(@PathVariable Long requestId) {
+        return ResponseEntity.ok(messageService.findByRequestId(requestId));
     }
 
-    @PreAuthorize("hasRole('REPRESENTATIVE') or hasRole('ADMIN')")
-    @PostMapping("/requests/{id}/close")
-    public ResponseEntity<?> closeRequest(@PathVariable Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        User currentUser = userRepository.findById(userDetails.getId())
+    @PutMapping("/{requestId}/assign")
+    public ResponseEntity<SupportRequest> assignRequest(
+            @PathVariable Long requestId,
+            @RequestParam Long assignedToId) {
+        
+        SupportRequest request = supportRequestService.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Support request not found"));
+        
+        User assignedTo = userService.findById(assignedToId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        SupportRequest request = supportRequestRepository.findById(id)
+        request.setAssignedTo(assignedTo);
+        request.setStatus(RequestStatus.IN_PROGRESS);
+
+        return ResponseEntity.ok(supportRequestService.save(request));
+    }
+
+    @PutMapping("/{requestId}/close")
+    public ResponseEntity<SupportRequest> closeRequest(@PathVariable Long requestId) {
+        SupportRequest request = supportRequestService.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Support request not found"));
 
-        // Check if user has access to close this request
-        if (currentUser.getRole() != User.UserRole.ADMIN &&
-            (request.getRepresentative() == null || !request.getRepresentative().getId().equals(currentUser.getId()))) {
-            return ResponseEntity.status(403).body("Access denied");
-        }
-
-        request.setStatus(SupportRequest.RequestStatus.CLOSED);
+        request.setStatus(RequestStatus.CLOSED);
         request.setClosedAt(LocalDateTime.now());
-        supportRequestRepository.save(request);
 
-        return ResponseEntity.ok("Support request closed successfully");
-    }
-
-    // Request/Response classes
-    public static class MessageRequest {
-        private String content;
-
-        public String getContent() {
-            return content;
-        }
-
-        public void setContent(String content) {
-            this.content = content;
-        }
+        return ResponseEntity.ok(supportRequestService.save(request));
     }
 } 

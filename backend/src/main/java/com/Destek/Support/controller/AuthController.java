@@ -1,138 +1,113 @@
 package com.Destek.Support.controller;
 
 import com.Destek.Support.model.User;
-import com.Destek.Support.repository.UserRepository;
-import com.Destek.Support.security.JwtTokenProvider;
-import com.Destek.Support.security.UserDetailsImpl;
+import com.Destek.Support.model.UserRole;
+import com.Destek.Support.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired
-    AuthenticationManager authenticationManager;
 
     @Autowired
-    UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    JwtTokenProvider tokenProvider;
+    public interface ApiResponse {}
 
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
-        );
+    public static class LoginResponse implements ApiResponse {
+        private final Long id;
+        private final String email;
+        private final UserRole role;
+        private final String fullName;
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
-        
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", jwt);
-        response.put("id", userDetails.getId());
-        response.put("email", userDetails.getUsername());
-        response.put("fullName", userDetails.getFullName());
-        response.put("role", userDetails.getRole());
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Error: Email is already in use!");
+        public LoginResponse(User user) {
+            this.id = user.getId();
+            this.email = user.getEmail();
+            this.role = user.getRole();
+            this.fullName = user.getFullName();
         }
 
-        // Create new user's account
-        User user = new User();
-        user.setFullName(registerRequest.getFullName());
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRole(registerRequest.getRole());
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok("User registered successfully!");
-    }
-    
-    // Request/Response classes
-    public static class LoginRequest {
-        private String email;
-        private String password;
+        public Long getId() {
+            return id;
+        }
 
         public String getEmail() {
             return email;
         }
 
-        public void setEmail(String email) {
-            this.email = email;
+        public UserRole getRole() {
+            return role;
         }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-    }
-    
-    public static class RegisterRequest {
-        private String fullName;
-        private String email;
-        private String password;
-        private User.UserRole role;
 
         public String getFullName() {
             return fullName;
         }
+    }
 
-        public void setFullName(String fullName) {
-            this.fullName = fullName;
+    public static class ErrorResponse implements ApiResponse {
+        private final String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
         }
 
-        public String getEmail() {
-            return email;
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse> login(@RequestBody Map<String, String> loginRequest) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+
+        if (email == null || password == null) {
+            return new ResponseEntity<>(new ErrorResponse("Email and password are required"), HttpStatus.BAD_REQUEST);
         }
 
-        public void setEmail(String email) {
-            this.email = email;
+        return userService.findByEmail(email)
+                .filter(user -> passwordEncoder.matches(password, user.getPassword()))
+                .map(user -> new ResponseEntity<ApiResponse>(new LoginResponse(user), HttpStatus.OK))
+                .orElse(new ResponseEntity<>(new ErrorResponse("Invalid email or password"), HttpStatus.BAD_REQUEST));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse> register(@RequestBody Map<String, String> registerRequest) {
+        String email = registerRequest.get("email");
+        String password = registerRequest.get("password");
+        String fullName = registerRequest.get("fullName");
+
+        if (email == null || password == null || fullName == null) {
+            return new ResponseEntity<>(new ErrorResponse("Email, password and full name are required"), HttpStatus.BAD_REQUEST);
         }
 
-        public String getPassword() {
-            return password;
+        if (userService.findByEmail(email).isPresent()) {
+            return new ResponseEntity<>(new ErrorResponse("Email already exists"), HttpStatus.BAD_REQUEST);
         }
 
-        public void setPassword(String password) {
-            this.password = password;
-        }
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setFullName(fullName);
+        user.setRole(UserRole.CUSTOMER);
 
-        public User.UserRole getRole() {
-            return role;
-        }
+        User savedUser = userService.save(user);
+        return new ResponseEntity<>(new LoginResponse(savedUser), HttpStatus.OK);
+    }
 
-        public void setRole(User.UserRole role) {
-            this.role = role;
-        }
+    @GetMapping("/user/{id}")
+    public ResponseEntity<ApiResponse> getUser(@PathVariable Long id) {
+        return userService.findById(id)
+                .map(user -> new ResponseEntity<ApiResponse>(new LoginResponse(user), HttpStatus.OK))
+                .orElse(new ResponseEntity<>(new ErrorResponse("User not found"), HttpStatus.NOT_FOUND));
     }
 } 
