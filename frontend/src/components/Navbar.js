@@ -30,7 +30,7 @@ const Navbar = () => {
               flexGrow: 1,
             }}
           >
-            TECHSTORE
+            SUPPORTHUB
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 2 }}>

@@ -8,10 +8,10 @@
 		<version>3.4.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.Destek</groupId>
-	<artifactId>Support</artifactId>
+	<groupId>com.SupportHub</groupId>
+	<artifactId>SupportHub</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Support</name>
+	<name>SupportHub</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

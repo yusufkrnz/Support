@@ -1,4 +1,4 @@
-# Müşteri Destek Sistemi
+# SupportHub
 
 Bu proje, müşteri destek taleplerini yönetmek için geliştirilmiş bir web uygulamasıdır. Sistem, müşterilerin destek talepleri oluşturmasına, müşteri temsilcilerinin bu talepleri yönetmesine ve yöneticilerin tüm süreci izlemesine olanak tanır.
 

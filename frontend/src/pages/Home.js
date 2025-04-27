@@ -43,10 +43,10 @@ const Home = () => {
       >
         <Container maxWidth="md">
           <Typography variant="h2" component="h1" gutterBottom>
-            TechStore Destek Merkezi
+            SupportHub Destek Merkezi
           </Typography>
           <Typography variant="h5" paragraph>
-            Teknoloji alışverişlerinizde yanınızdayız
+            Müşteri hizmetlerinde yanınızdayız
           </Typography>
           <Button
             variant="contained"
