@@ -1,138 +1,142 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextField, Button, Box, Typography, Container, Paper } from '@mui/material';
+import { 
+  TextField, 
+  Button, 
+  Box, 
+  Typography, 
+  Container, 
+  Paper,
+  InputAdornment,
+  IconButton,
+  Divider,
+  Link
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import authService from '../../services/auth';
 import { motion } from 'framer-motion';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import GoogleIcon from '@mui/icons-material/Google';
+import FacebookIcon from '@mui/icons-material/Facebook';
 import animatedCharacter from '../../assets/animated-character.gif';
 
 const PageContainer = styled(Container)(({ theme }) => ({
   minHeight: '100vh',
   display: 'flex',
-  alignItems: 'stretch',
-  padding: 0,
-  margin: 0,
-  maxWidth: '100% !important',
-  overflow: 'hidden'
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(4),
+  background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
 }));
 
-const IllustrationContainer = styled(Box)(({ theme }) => ({
-  flex: '1.4',
+const LoginContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  width: '100%',
+  maxWidth: '1000px',
+  minHeight: '600px',
+  borderRadius: '20px',
+  overflow: 'hidden',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+  backdropFilter: 'blur(10px)',
+  [theme.breakpoints.down('md')]: {
+    flexDirection: 'column',
+  }
+}));
+
+const LeftSection = styled(Box)(({ theme }) => ({
+  flex: 1,
+  padding: theme.spacing(6),
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
-  backgroundColor: '#FFFFFF',
-  padding: theme.spacing(4, 3),
-  position: 'relative',
-  overflow: 'hidden',
+  background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(33, 150, 243, 0.9) 100%)',
+  color: 'white',
+  backdropFilter: 'blur(10px)',
   [theme.breakpoints.down('md')]: {
     display: 'none',
   }
 }));
 
-const WelcomeText = styled(Box)(({ theme }) => ({
-  textAlign: 'center',
-  marginBottom: theme.spacing(3),
-  width: '100%',
-  maxWidth: '500px'
-}));
-
-const AnimatedCharacter = styled('img')(({ theme }) => ({
-  width: '45%',
-  height: 'auto',
-  objectFit: 'contain',
-  position: 'relative'
-}));
-
-const LoginForm = styled(Box)(({ theme }) => ({
-  flex: '0.6',
+const RightSection = styled(Box)(({ theme }) => ({
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: '#FFFFFF',
-  padding: theme.spacing(4, 3),
-  [theme.breakpoints.down('md')]: {
-    flex: '1',
-  }
-}));
-
-const FormContainer = styled(Box)(({ theme }) => ({
-  width: '100%',
-  maxWidth: '320px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(2)
+  padding: theme.spacing(4),
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  backdropFilter: 'blur(10px)',
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-  width: '100%'
+  padding: theme.spacing(4),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  width: '100%',
+  maxWidth: '400px',
+  margin: '0 auto',
+  background: 'rgba(255, 255, 255, 0.9)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '20px',
 }));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
+  marginBottom: theme.spacing(2),
+  width: '100%',
   '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-    backgroundColor: '#F5F5F5',
-    height: '45px',
-    marginBottom: theme.spacing(1),
+    borderRadius: '10px',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     '& fieldset': {
-      borderColor: 'transparent'
+      borderColor: 'rgba(25, 118, 210, 0.3)',
     },
     '&:hover fieldset': {
-      borderColor: '#FFA500'
+      borderColor: '#1976d2',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#FFA500'
+      borderColor: '#1976d2',
     }
   }
 }));
 
-const ButtonContainer = styled(Box)(({ theme }) => ({
-  width: '100%',
-  display: 'flex',
-  gap: theme.spacing(2),
-  marginTop: theme.spacing(2)
-}));
-
 const StyledButton = styled(Button)(({ theme }) => ({
-  padding: theme.spacing(1),
-  borderRadius: '8px',
-  fontSize: '0.9rem',
-  fontWeight: 600,
+  marginTop: theme.spacing(2),
+  padding: theme.spacing(1.5),
+  borderRadius: '10px',
   textTransform: 'none',
-  backgroundColor: '#FFA500',
-  height: '40px',
+  fontSize: '1rem',
+  fontWeight: 600,
+  background: 'linear-gradient(135deg, #1976d2 0%, #2196f3 100%)',
+  color: 'white',
+  width: '100%',
   '&:hover': {
-    backgroundColor: '#FF8C00',
+    background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
   }
 }));
 
-const ChatbotButton = styled(Button)(({ theme }) => ({
+const SocialButton = styled(Button)(({ theme }) => ({
+  flex: 1,
   padding: theme.spacing(1),
-  borderRadius: '8px',
-  fontSize: '0.9rem',
-  fontWeight: 600,
+  borderRadius: '10px',
   textTransform: 'none',
-  backgroundColor: '#4CAF50',
-  color: '#fff',
-  height: '40px',
-  whiteSpace: 'nowrap',
-  minWidth: 'auto',
+  fontSize: '0.9rem',
+  fontWeight: 500,
+  margin: theme.spacing(0.5),
+  borderColor: '#1976d2',
+  color: '#1976d2',
   '&:hover': {
-    backgroundColor: '#388E3C',
-  },
-  '& .MuiButton-startIcon': {
-    marginRight: theme.spacing(1)
+    borderColor: '#2196f3',
+    backgroundColor: 'rgba(25, 118, 210, 0.04)',
   }
 }));
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -141,194 +145,160 @@ const LoginPage = () => {
     setError('');
 
     try {
-      // Kullanıcı bilgilerini kontrol et
-      let userData;
-      if (username === 'admin@example.com' && password === 'admin') {
-        userData = {
-          id: 1,
-          username: 'admin@example.com',
-          fullName: 'Admin User',
-          email: 'admin@example.com',
-          role: 'ADMIN',
-          token: 'mock-jwt-token-admin'
-        };
-      } else if (username === 'rep@example.com' && password === 'rep') {
-        userData = {
-          id: 2,
-          username: 'rep@example.com',
-          fullName: 'Ahmet Yılmaz',
-          email: 'rep@example.com',
-          role: 'REPRESENTATIVE',
-          token: 'mock-jwt-token-rep'
-        };
-      } else if (username === 'customer@example.com' && password === 'customer') {
-        userData = {
-          id: 4,
-          username: 'customer@example.com',
-          fullName: 'Mehmet Kaya',
-          email: 'customer@example.com',
-          role: 'CUSTOMER',
-          token: 'mock-jwt-token-customer'
-        };
-      } else {
-        throw new Error('Geçersiz kullanıcı adı veya şifre');
-      }
-
-      // Kullanıcı bilgilerini localStorage'a kaydet
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Role göre yönlendirme
-      switch (userData.role) {
-        case 'ADMIN':
-          navigate('/admin');
-          break;
-        case 'REPRESENTATIVE':
-          navigate('/representative');
-          break;
-        case 'CUSTOMER':
-          navigate('/customer');
-          break;
-        default:
-          navigate('/');
+      const response = await authService.login(email, password);
+      if (response.data.token) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+        navigate('/dashboard');
       }
     } catch (err) {
-      setError('Kullanıcı adı veya şifre hatalı');
+      setError('Geçersiz e-posta veya şifre');
       console.error('Login error:', err);
     }
   };
 
-  const handleChatbot = () => {
-    // Geçici misafir kullanıcı oluştur
-    const guestUser = {
-      id: Date.now(),
-      username: `guest_${Date.now()}`,
-      fullName: 'Misafir Kullanıcı',
-      email: `guest_${Date.now()}@example.com`,
-      role: 'GUEST',
-      token: 'mock-jwt-token-guest'
-    };
+  const handleGoogleLogin = () => {
+    // Google ile giriş işlemleri
+    console.log('Google login');
+  };
 
-    // Geçici kullanıcı bilgilerini localStorage'a kaydet
-    localStorage.setItem('user', JSON.stringify(guestUser));
-    
-    // Chatbot sayfasına yönlendir
-    navigate('/customer/chat');
+  const handleFacebookLogin = () => {
+    // Facebook ile giriş işlemleri
+    console.log('Facebook login');
   };
 
   return (
-    <PageContainer maxWidth={false} disableGutters>
-      <IllustrationContainer>
-        <WelcomeText>
-          <Typography 
-            variant="h3" 
-            sx={{ 
-              fontWeight: 700,
-              color: '#2C3E50',
-              mb: 1.5,
-              fontSize: { xs: '2rem', md: '2.4rem' }
-            }}
-          >
-            Hoş Geldiniz! 👋
-          </Typography>
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              color: '#666',
-              mb: 1.5,
-              fontWeight: 500,
-              fontSize: '1.2rem'
-            }}
-          >
-            7/24 Destek Hizmeti
-          </Typography>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: '#666',
-              fontSize: '1rem',
-              maxWidth: '450px',
-              margin: '0 auto'
-            }}
-          >
-            Size yardımcı olmak için buradayız. Hızlı çözümler ve profesyonel destek için giriş yapın veya chatbot ile görüşün.
-          </Typography>
-        </WelcomeText>
-        <AnimatedCharacter
-          src={animatedCharacter}
-          alt="Support character"
-          component={motion.img}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+    <PageContainer maxWidth={false}>
+      <LoginContainer>
+        <LeftSection
+          component={motion.div}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-        />
-      </IllustrationContainer>
-      <LoginForm component="form" onSubmit={handleSubmit}>
-        <FormContainer>
-          <StyledPaper elevation={3}>
-            <Box sx={{ mb: 3, textAlign: 'left' }}>
-              <Typography 
-                variant="h4" 
-                component="h1" 
-                sx={{ 
-                  fontWeight: 700,
-                  fontSize: '1.5rem',
-                  mb: 1,
-                  color: '#2C3E50'
+        >
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
+              Hoş Geldiniz! 👋
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              7/24 Destek Hizmeti
+            </Typography>
+            <Typography variant="body1" sx={{ maxWidth: '400px', margin: '0 auto' }}>
+              Size yardımcı olmak için buradayız. Hızlı çözümler ve profesyonel destek için giriş yapın.
+            </Typography>
+          </Box>
+          <Box
+            component="img"
+            src={animatedCharacter}
+            alt="Support character"
+            sx={{ width: '60%', maxWidth: '300px' }}
+          />
+        </LeftSection>
+
+        <RightSection
+          component={motion.div}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <StyledPaper elevation={0}>
+            <Typography variant="h4" component="h1" sx={{ mb: 3, fontWeight: 700 }}>
+              Giriş Yap
+            </Typography>
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+              <StyledTextField
+                fullWidth
+                placeholder="E-posta"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={!!error}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon color="action" />
+                    </InputAdornment>
+                  ),
                 }}
-              >
-                Tekrar Hoşgeldiniz
-              </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  color: '#666',
-                  fontSize: '0.9rem'
+              />
+
+              <StyledTextField
+                fullWidth
+                placeholder="Şifre"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!error}
+                helperText={error}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
                 }}
-              >
-                Destek sistemine giriş yapın
-              </Typography>
-            </Box>
+              />
 
-            <StyledTextField
-              fullWidth
-              placeholder="Kullanıcı Adı"
-              variant="outlined"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              error={!!error}
-            />
+              <Box sx={{ width: '100%', textAlign: 'right', mb: 2 }}>
+                <Link href="#" variant="body2" sx={{ color: '#ff1744' }}>
+                  Şifremi Unuttum
+                </Link>
+              </Box>
 
-            <StyledTextField
-              fullWidth
-              placeholder="Şifre"
-              type="password"
-              variant="outlined"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={!!error}
-              helperText={error}
-            />
-
-            <ButtonContainer>
               <StyledButton
                 fullWidth
                 variant="contained"
+                color="primary"
                 type="submit"
+                sx={{ mb: 2 }}
               >
                 Giriş Yap
               </StyledButton>
-              <ChatbotButton
-                fullWidth
-                variant="contained"
-                onClick={handleChatbot}
-                startIcon={<span role="img" aria-label="chat">💬</span>}
-              >
-                Sizi Dinliyoruz
-              </ChatbotButton>
-            </ButtonContainer>
+
+              <Divider sx={{ my: 2, width: '100%' }}>
+                <Typography variant="body2" color="text.secondary">
+                  veya
+                </Typography>
+              </Divider>
+
+              <Box sx={{ display: 'flex', gap: 1, width: '100%', mb: 2 }}>
+                <SocialButton
+                  variant="outlined"
+                  startIcon={<GoogleIcon />}
+                  onClick={handleGoogleLogin}
+                >
+                  Google
+                </SocialButton>
+                <SocialButton
+                  variant="outlined"
+                  startIcon={<FacebookIcon />}
+                  onClick={handleFacebookLogin}
+                >
+                  Facebook
+                </SocialButton>
+              </Box>
+
+              <Box sx={{ textAlign: 'center', mt: 2 }}>
+                <Typography variant="body2">
+                  Hesabınız yok mu?{' '}
+                  <Link href="/register" color="primary">
+                    Kayıt Ol
+                  </Link>
+                </Typography>
+              </Box>
+            </Box>
           </StyledPaper>
-        </FormContainer>
-      </LoginForm>
+        </RightSection>
+      </LoginContainer>
     </PageContainer>
   );
 };

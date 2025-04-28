@@ -5,7 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import LoginPage from './pages/auth/LoginPage';
-import Register from './pages/Register';
+import RegisterPage from './pages/auth/RegisterPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import RepresentativeDashboard from './pages/representative/RepresentativeDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -13,16 +13,7 @@ import CustomerDashboard from './pages/customer/CustomerDashboard';
 const theme = createTheme({
   palette: {
     primary: {
-      light: '#4CAF50',
-      main: '#2E7D32',
-      dark: '#1B5E20',
-      contrastText: '#fff',
-    },
-    secondary: {
-      light: '#ff4081',
-      main: '#f50057',
-      dark: '#c51162',
-      contrastText: '#fff',
+      main: '#66BB6A',
     },
     background: {
       default: '#f8f9fa',
@@ -31,32 +22,12 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-    h6: {
-      fontWeight: 600,
-    },
     button: {
       textTransform: 'none',
-      fontWeight: 500,
     },
   },
   shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 25,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        rounded: {
-          borderRadius: 16,
-        },
-      },
-    },
+    borderRadius: 10,
   },
 });
 
@@ -69,15 +40,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Admin Routes */}
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
-          
-          {/* Representative Routes */}
           <Route path="/representative/*" element={<RepresentativeDashboard />} />
-          
-          {/* Customer Routes - includes chat route internally */}
           <Route path="/customer/*" element={<CustomerDashboard />} />
         </Routes>
       </div>
