@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atasun Chatbot Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .chat-container {
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            height: 400px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #dcf8c6;
+            margin-left: auto;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #e9e9eb;
+        }
+        .input-container {
+            display: flex;
+            margin-top: 20px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #send-button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .settings {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .settings input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .settings label {
+            font-weight: bold;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Atasun Chatbot Test</h1>
+        
+        <div class="settings">
+            <label for="api-url">API URL:</label>
+            <input type="text" id="api-url" value="http://localhost:8082/api/chatbot/sendMessage">
+            
+            <div class="status" id="status"></div>
+        </div>
+        
+        <div class="chat-container" id="chat-container">
+            <div class="message bot-message">
+                <strong>Atasun Chatbot:</strong> Merhaba! Atasun destek botuna hoş geldiniz. Size nasıl yardımcı olabilirim?
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Mesajınızı buraya yazın..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button id="send-button" onclick="sendMessage()">Gönder</button>
+        </div>
+    </div>
+
+    <script>
+        // Global değişkenler
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const apiUrlInput = document.getElementById('api-url');
+        const statusDiv = document.getElementById('status');
+        
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // Yerel depolamadan API URL'sini al
+            const savedApiUrl = localStorage.getItem('apiUrl');
+            if (savedApiUrl) {
+                apiUrlInput.value = savedApiUrl;
+            }
+            
+            // API URL'si değiştiğinde yerel depolamaya kaydet
+            apiUrlInput.addEventListener('change', function() {
+                localStorage.setItem('apiUrl', this.value);
+                statusDiv.textContent = 'API URL kaydedildi';
+                statusDiv.className = 'status success';
+                setTimeout(() => { statusDiv.textContent = ''; statusDiv.className = 'status'; }, 3000);
+            });
+        });
+        
+        // Mesaj gönderme
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            
+            // Kullanıcı mesajını UI'a ekle
+            addMessage(message, 'user');
+            userInput.value = '';
+            
+            try {
+                // API URL'sini al
+                const apiUrl = apiUrlInput.value;
+                
+                // API isteği
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        companyCode: 'atasun'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Bot yanıtını UI'a ekle
+                let botResponse = '';
+                if (data.message) {
+                    botResponse = data.message;
+                } else if (data.error) {
+                    botResponse = `Hata: ${data.error}`;
+                } else {
+                    botResponse = 'Yanıt alınamadı';
+                }
+                
+                addMessage(botResponse, 'bot');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = `Hata: ${error.message}`;
+                statusDiv.className = 'status error';
+                addMessage(`Bir hata oluştu: ${error.message}`, 'bot');
+            }
+        }
+        
+        // Mesajı UI'a ekler
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `<strong>Siz:</strong> ${text}`;
+            } else {
+                messageDiv.innerHTML = `<strong>Atasun Chatbot:</strong> ${text}`;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html> 

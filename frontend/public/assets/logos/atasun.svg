@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+  <style>
+    .logo-text { font-family: Arial, sans-serif; font-weight: bold; fill: #007398; }
+    .tagline { font-family: Arial, sans-serif; font-size: 12px; fill: #666; }
+  </style>
+  <text x="10" y="35" class="logo-text" font-size="28">ATASUN OPTİK</text>
+  <text x="12" y="50" class="tagline">Gözlük ve Lens Uzmanı</text>
+  <path d="M5,5 L195,5 L195,55 L5,55 Z" fill="none" stroke="#007398" stroke-width="2" />
+</svg> 

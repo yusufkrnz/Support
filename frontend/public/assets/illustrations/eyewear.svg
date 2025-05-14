@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200" viewBox="0 0 500 200">
+  <style>
+    .frame-1 { fill: none; stroke: #007398; stroke-width: 3; }
+    .frame-2 { fill: none; stroke: #FF9D00; stroke-width: 3; }
+    .frame-3 { fill: none; stroke: #333333; stroke-width: 3; }
+    .lens { fill: rgba(0, 115, 152, 0.1); }
+    .lens-sun { fill: rgba(255, 157, 0, 0.2); }
+  </style>
+  
+  <!-- First Glasses - Round -->
+  <g transform="translate(100, 100)">
+    <!-- Left Lens -->
+    <circle cx="-40" cy="0" r="35" class="lens" />
+    <circle cx="-40" cy="0" r="35" class="frame-1" />
+    
+    <!-- Right Lens -->
+    <circle cx="40" cy="0" r="35" class="lens" />
+    <circle cx="40" cy="0" r="35" class="frame-1" />
+    
+    <!-- Bridge -->
+    <path d="M-5,0 L5,0" class="frame-1" />
+    
+    <!-- Temple Arms -->
+    <path d="M-75,0 L-95,-10" class="frame-1" />
+    <path d="M75,0 L95,-10" class="frame-1" />
+  </g>
+  
+  <!-- Second Glasses - Cat Eye Sunglasses -->
+  <g transform="translate(250, 100)">
+    <!-- Left Lens -->
+    <path d="M-60,0 C-60,-25 -35,-30 -20,-30 C-5,-30 5,-20 5,0 C5,20 -10,30 -30,30 C-50,30 -60,20 -60,0 Z" class="lens-sun" />
+    <path d="M-60,0 C-60,-25 -35,-30 -20,-30 C-5,-30 5,-20 5,0 C5,20 -10,30 -30,30 C-50,30 -60,20 -60,0 Z" class="frame-2" />
+    
+    <!-- Right Lens -->
+    <path d="M60,0 C60,-25 35,-30 20,-30 C5,-30 -5,-20 -5,0 C-5,20 10,30 30,30 C50,30 60,20 60,0 Z" class="lens-sun" />
+    <path d="M60,0 C60,-25 35,-30 20,-30 C5,-30 -5,-20 -5,0 C-5,20 10,30 30,30 C50,30 60,20 60,0 Z" class="frame-2" />
+    
+    <!-- Bridge -->
+    <path d="M-5,-5 L5,-5" class="frame-2" />
+    
+    <!-- Temple Arms -->
+    <path d="M-60,0 L-80,-5" class="frame-2" />
+    <path d="M60,0 L80,-5" class="frame-2" />
+  </g>
+  
+  <!-- Third Glasses - Rectangle -->
+  <g transform="translate(400, 100)">
+    <!-- Left Lens -->
+    <rect x="-60" y="-25" width="50" height="50" rx="5" class="lens" />
+    <rect x="-60" y="-25" width="50" height="50" rx="5" class="frame-3" />
+    
+    <!-- Right Lens -->
+    <rect x="10" y="-25" width="50" height="50" rx="5" class="lens" />
+    <rect x="10" y="-25" width="50" height="50" rx="5" class="frame-3" />
+    
+    <!-- Bridge -->
+    <path d="M-10,-5 L10,-5" class="frame-3" />
+    
+    <!-- Temple Arms -->
+    <path d="M-60,0 L-80,-5" class="frame-3" />
+    <path d="M60,0 L80,-5" class="frame-3" />
+  </g>
+</svg> 

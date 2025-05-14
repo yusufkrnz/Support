@@ -1,0 +1,44 @@
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes wave {
+      0% { transform: rotate(-5deg); }
+      50% { transform: rotate(15deg); }
+      100% { transform: rotate(-5deg); }
+    }
+    .waving-arm {
+      animation: wave 2s infinite ease-in-out;
+      transform-origin: 280 180;
+    }
+  </style>
+  
+  <!-- Sol Kol (Panele Yaslanan) -->
+  <path d="M240 180 C260 160 270 200 260 220" stroke="#4A55A2" stroke-width="25" stroke-linecap="round"/>
+  
+  <!-- Vücut -->
+  <path d="M200 150 C180 150 180 180 180 200 L180 350 C180 380 220 380 220 350 L220 200 C220 180 220 150 200 150" fill="#4A55A2"/>
+  
+  <!-- Baş -->
+  <circle cx="200" cy="120" r="45" fill="#FFD1DC"/>
+  
+  <!-- Saç -->
+  <path d="M160 120 C160 80 240 80 240 120 C240 90 200 95 200 120" fill="#663300"/>
+  <path d="M160 120 C160 90 200 95 200 120" fill="#663300"/>
+  
+  <!-- Yüz -->
+  <circle cx="185" cy="110" r="4" fill="#000000"/> <!-- Sol Göz -->
+  <circle cx="215" cy="110" r="4" fill="#000000"/> <!-- Sağ Göz -->
+  <path d="M190 130 Q200 135 210 130" stroke="#000000" stroke-width="2" fill="none"/> <!-- Gülümseyen Ağız -->
+  
+  <!-- Sağ Kol (El Sallayan) -->
+  <g class="waving-arm">
+    <path d="M220 180 C240 160 260 140 280 160" stroke="#4A55A2" stroke-width="25" stroke-linecap="round"/>
+    <circle cx="285" cy="165" r="12" fill="#FFD1DC"/> <!-- El -->
+  </g>
+  
+  <!-- Etek -->
+  <path d="M180 350 L200 450 L220 350 Z" fill="#4CAF50"/>
+  
+  <!-- Ayakkabılar -->
+  <ellipse cx="190" cy="450" rx="15" ry="8" fill="#333"/>
+  <ellipse cx="210" cy="450" rx="15" ry="8" fill="#333"/>
+</svg> 

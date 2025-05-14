@@ -1,0 +1,6 @@
+kullanıcııların hangi firmaya ait datayı taşıdığını inşa edecğiz
+
+
+ Role sınıfı(admin,customer,superadmin) ve hangi firmaya ait bu kişiler
+
+ tek bi user tablosundan her şeyi yöneteceğiz

@@ -1,0 +1,24 @@
+yönlendirmelerin hepsi buraya gelecek ve buradan main yönlendşrme buradan yapılacak ve kayıtları tutulacak . allta bi fluent api gibi sistem kurgumuz olacak ana dosyada çok temiz şekilde atıyorum 
+ 
+   
+      gemini istek gidecek ya buryaa istek gelsin isğei alalım ve 
+      adım adım 
+       
+       istek doğrulansın 
+        isteği gönderelim datayla
+        loglayalım
+        kişiye bildirim gönderelim 
+        başka talep i yoksa işleminini özetini mail atalım (talebiniz oluşturuldu diye gmrsel sunalım ve ilgili mail adresine mail atalım )
+
+
+        bu işlemlerin hepsi burada yapılacak ve kayıt altında tutulacak . 
+           sonra asıl isteğim bunu şu tarzda yapmak 
+
+           işlemi.logla
+           işslem.son.e->(mail gönder)
+           işlme.bildir
+            gibi gibi böyle temiz gözüksün ekrnda . burada py ve java konuşacaka vesaire bunu unutmayalım .  
+
+            bütün orientation işlemşerinii üssü burası olacak . 
+
+            

@@ -1,0 +1,18 @@
+şifre unutma
+mail unutma
+
+
+giriş yap + (hesap)doğrulama işlemleri |
+                                       |----> main yönlendirme sistemine devir ediyoruz
+
+
+   hızlı çözüm ve welcome ekranın açılması .|
+                                            |______>eğer hızlı çözüm e basılırsa|
+                                                                                |----> Main Yönlendirme ve ve chatbot a gönderilmesi
+
+
+   üye ol |-------> Main Yönlendirme merkezine gidilisin .
+
+         redis işlem hatırlama kısmı (kafamda tam canlanmadı ) .
+
+

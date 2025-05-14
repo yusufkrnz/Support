@@ -1,0 +1,7 @@
+Ana yönlendirme merkezi ekranlar yönlendirme
+
+ ve fluentapı tarzı temiz işler yazılmal
+  redis le iletişim var .
+   işlemlerin isteklerin loglanması
+    lamda ile ekranlra yönlendşrilmesi
+     verilerin analizleyi ilgili panellere yönlendirilmesi

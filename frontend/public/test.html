@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destek Support - API Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            color: #2980b9;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            min-height: 100px;
+            overflow-x: auto;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Destek Support API Test</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab(event, 'tab-config')">Konfigürasyon</div>
+            <div class="tab" onclick="openTab(event, 'tab-auth')">Kimlik Doğrulama</div>
+            <div class="tab" onclick="openTab(event, 'tab-chatbot')">Chatbot</div>
+            <div class="tab" onclick="openTab(event, 'tab-health')">Sistem Durumu</div>
+        </div>
+        
+        <!-- Konfigürasyon Tab -->
+        <div id="tab-config" class="tab-content active">
+            <div class="section">
+                <h2>API Bağlantı Ayarları</h2>
+                <div class="input-group">
+                    <label for="api-base-url">API Base URL:</label>
+                    <input type="text" id="api-base-url" value="http://localhost:8082/api" />
+                </div>
+                <div class="input-group">
+                    <label for="session-token">Oturum Token (Bearer):</label>
+                    <input type="text" id="session-token" placeholder="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
+                </div>
+                <button onclick="saveConfig()">Ayarları Kaydet</button>
+                <div id="config-status" class="status"></div>
+            </div>
+        </div>
+        
+        <!-- Kimlik Doğrulama Tab -->
+        <div id="tab-auth" class="tab-content">
+            <div class="section">
+                <h2>Kullanıcı Girişi</h2>
+                <div class="input-group">
+                    <label for="login-username">Kullanıcı Adı:</label>
+                    <input type="text" id="login-username" value="admin" />
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Parola:</label>
+                    <input type="password" id="login-password" value="admin" />
+                </div>
+                <button onclick="login()">Giriş Yap</button>
+                <div id="login-result" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- Chatbot Tab -->
+        <div id="tab-chatbot" class="tab-content">
+            <div class="section">
+                <h2>Chatbot Mesaj Gönderme</h2>
+                <div class="input-group">
+                    <label for="company-selector">Şirket:</label>
+                    <select id="company-selector">
+                        <option value="atasun">Atasun</option>
+                        <option value="bim">BİM</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="chat-message">Mesaj:</label>
+                    <textarea id="chat-message" rows="3" placeholder="Merhaba, ürün sorgulamak istiyorum..."></textarea>
+                </div>
+                <button onclick="sendChatMessage()">Mesaj Gönder</button>
+                <div id="chat-result" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- Sistem Durumu Tab -->
+        <div id="tab-health" class="tab-content">
+            <div class="section">
+                <h2>API Durum Kontrolü</h2>
+                <button onclick="checkHealth()">Sistem Durumunu Kontrol Et</button>
+                <div id="health-result" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global değişkenler
+        let apiBaseUrl = 'http://localhost:8082/api';
+        let authToken = '';
+        
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kayıtlı ayarları al
+            const savedBaseUrl = localStorage.getItem('apiBaseUrl');
+            const savedToken = localStorage.getItem('authToken');
+            
+            if (savedBaseUrl) {
+                document.getElementById('api-base-url').value = savedBaseUrl;
+                apiBaseUrl = savedBaseUrl;
+            }
+            
+            if (savedToken) {
+                document.getElementById('session-token').value = savedToken;
+                authToken = savedToken;
+            }
+        });
+        
+        // Tab değiştirme fonksiyonu
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+        
+        // Konfigürasyon kaydetme
+        function saveConfig() {
+            const baseUrl = document.getElementById('api-base-url').value;
+            const token = document.getElementById('session-token').value;
+            
+            localStorage.setItem('apiBaseUrl', baseUrl);
+            localStorage.setItem('authToken', token);
+            
+            apiBaseUrl = baseUrl;
+            authToken = token;
+            
+            const statusElement = document.getElementById('config-status');
+            statusElement.textContent = 'Ayarlar kaydedildi!';
+            statusElement.className = 'status success';
+        }
+        
+        // API çağrılarını yapacak yardımcı fonksiyon
+        async function callApi(endpoint, method = 'GET', data = null) {
+            const url = `${apiBaseUrl}${endpoint}`;
+            
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = authToken;
+            }
+            
+            const options = {
+                method,
+                headers,
+            };
+            
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                return { success: true, data: result, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Kullanıcı girişi
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const resultElement = document.getElementById('login-result');
+            
+            resultElement.innerHTML = 'Giriş yapılıyor...';
+            
+            try {
+                const result = await callApi('/auth/login', 'POST', {
+                    username,
+                    password
+                });
+                
+                if (result.success && result.data.token) {
+                    const token = `Bearer ${result.data.token}`;
+                    document.getElementById('session-token').value = token;
+                    localStorage.setItem('authToken', token);
+                    authToken = token;
+                    
+                    resultElement.innerHTML = `<div class="status success">Giriş başarılı! Token: ${result.data.token}</div>
+                                            <pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                } else {
+                    resultElement.innerHTML = `<div class="status error">Giriş başarısız: ${result.data?.message || 'Bilinmeyen hata'}</div>
+                                            <pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `<div class="status error">Hata: ${error.message}</div>`;
+            }
+        }
+        
+        // Chatbot mesaj gönderme
+        async function sendChatMessage() {
+            const companyCode = document.getElementById('company-selector').value;
+            const message = document.getElementById('chat-message').value;
+            const resultElement = document.getElementById('chat-result');
+            
+            resultElement.innerHTML = 'Mesaj gönderiliyor...';
+            
+            try {
+                const result = await callApi('/chatbot/sendMessage', 'POST', {
+                    message,
+                    companyCode
+                });
+                
+                if (result.success) {
+                    resultElement.innerHTML = `<div class="status success">Mesaj başarıyla gönderildi!</div>
+                                            <pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                } else {
+                    resultElement.innerHTML = `<div class="status error">Mesaj gönderilemedi: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `<div class="status error">Hata: ${error.message}</div>`;
+            }
+        }
+        
+        // Sistem durumu kontrolü
+        async function checkHealth() {
+            const resultElement = document.getElementById('health-result');
+            
+            resultElement.innerHTML = 'Sistem durumu kontrol ediliyor...';
+            
+            try {
+                const result = await callApi('/actuator/health');
+                
+                if (result.success) {
+                    resultElement.innerHTML = `<div class="status ${result.data.status === 'UP' ? 'success' : 'error'}">
+                                                Sistem Durumu: ${result.data.status}
+                                            </div>
+                                            <pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                } else {
+                    resultElement.innerHTML = `<div class="status error">Durum kontrolü yapılamadı: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `<div class="status error">Hata: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html> 

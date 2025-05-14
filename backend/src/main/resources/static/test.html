@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Login Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Destek Support API Test</h1>
+    
+    <div class="container">
+        <h2>API Status</h2>
+        <button onclick="testAPIStatus()">Check API Status</button>
+        <div id="status-result"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Login Test</h2>
+        <p>Test with pre-defined demo accounts:</p>
+        <button onclick="testLogin('customer@support.com', 'password123')">Customer Login</button>
+        <button onclick="testLogin('admin@support.com', 'password123')">Admin Login</button>
+        <button onclick="testLogin('manager@support.com', 'password123')">Manager Login</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Demo Users</h2>
+        <button onclick="getDemoUsers()">Get Demo Users</button>
+        <div id="demo-users-result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8081/api';
+        
+        async function testAPIStatus() {
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.innerHTML = '<p>Checking API status...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<p>Status: ${response.ok ? '✅ Connected' : '❌ Error'}</p>
+                                      <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testLogin(email, password) {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = `<p>Testing login with ${email}...</p>`;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<p>Status: ${response.ok ? '✅ Success' : '❌ Failed'}</p>
+                                      <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function getDemoUsers() {
+            const resultDiv = document.getElementById('demo-users-result');
+            resultDiv.innerHTML = '<p>Getting demo users...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/demo-users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<p>Status: ${response.ok ? '✅ Success' : '❌ Failed'}</p>
+                                      <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html> 

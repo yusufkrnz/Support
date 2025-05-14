@@ -1,0 +1,1 @@
+/*  gemini apı ile bağlantı olacak */
