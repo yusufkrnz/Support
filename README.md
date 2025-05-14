@@ -86,6 +86,8 @@ Uygulama başlatıldıktan sonra, tarayıcınızda `http://localhost:3000` adres
 
 ## Sistem Mimarisi
 
+![Sistem Mimarisi](screenshots/system-architecture.png)
+
 ```
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
 │   Frontend  │◄────►│   Backend   │◄────►│  Database   │
