@@ -205,7 +205,7 @@ npm start
 
 - `POST /api/process-query`: Genel sorguları işler
 - `POST /api/classify`: Mesajı kategorilere ayırır
-- `POST /api/analyze`: Karmaşık mesajları analiz eder
+- `POST /api/analyze`: Karmaşık mesajları analiz eder    
 - `POST /api/get-required-info`: Kategori bazlı form bilgilerini döndürür
 
 ## Geliştirici Notları
@@ -213,4 +213,5 @@ npm start
 - Backend Java 17 ile geliştirilmiştir
 - AI servisi Python 3.9+ gerektirir
 - Llama modeli için Ollama sunucusu gereklidir (http://localhost:11434)
-- Frontend React 18 ile geliştirilmiştir 
+- Frontend React 18 ile geliştirilmiştir
+- Gemini API Key gerektirir,iade işlemleri için
